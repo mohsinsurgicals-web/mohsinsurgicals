@@ -8,6 +8,8 @@ import ProductCard from '../components/ProductCard';
 import RentalModal from '../components/RentalModal';
 import SEO from '../components/SEO';
 import { CONTACT_PHONE, CONTACT_EMAIL } from '../constants';
+import { useReviews } from '../context/ReviewsContext';
+import { Review } from '../lib/pantry';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // 'id' in the URL is now the handle
@@ -42,14 +44,9 @@ const ProductDetailPage: React.FC = () => {
   const [managedMetafields, setManagedMetafields] = useState<any>({});
 
   // Reviews state
-  interface Review {
-    id: string;
-    name: string;
-    rating: number;
-    date: string;
-    content: string;
-  }
+  const { loadReviews, addReview } = useReviews();
   const [productReviews, setProductReviews] = useState<Review[]>([]);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, content: '' });
   const [reviewSubmitStatus, setReviewSubmitStatus] = useState<'idle' | 'success'>('idle');
@@ -167,52 +164,48 @@ useEffect(() => {
 
   useEffect(() => {
     if (!product?.id) return;
-    const storageKey = `reviews_${product.id}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
+    
+    const fetchReviews = async () => {
+      setIsReviewsLoading(true);
       try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setProductReviews(parsed);
-        } else {
-          const initial = generateInitialReviews(product.title, product.category);
-          localStorage.setItem(storageKey, JSON.stringify(initial));
-          setProductReviews(initial);
-        }
+        const data = await loadReviews(product.id, product.title, product.category);
+        setProductReviews(data);
       } catch (e) {
-        console.error("Failed to parse reviews from local storage, resetting to default:", e);
-        const initial = generateInitialReviews(product.title, product.category);
-        localStorage.setItem(storageKey, JSON.stringify(initial));
-        setProductReviews(initial);
+        console.error("Failed to load reviews:", e);
+      } finally {
+        setIsReviewsLoading(false);
       }
-    } else {
-      const initial = generateInitialReviews(product.title, product.category);
-      localStorage.setItem(storageKey, JSON.stringify(initial));
-      setProductReviews(initial);
-    }
+    };
+    
+    fetchReviews();
+    
     // Reset form states
     setIsReviewFormOpen(false);
     setReviewForm({ name: '', rating: 5, content: '' });
     setReviewSubmitStatus('idle');
-  }, [product]);
+  }, [product, loadReviews]);
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product?.id || !reviewForm.name || !reviewForm.content) return;
 
-    const newRev = {
-      id: `rev-${Date.now()}`,
-      name: reviewForm.name,
-      rating: reviewForm.rating,
-      date: new Date().toISOString().split('T')[0],
-      content: reviewForm.content
-    };
-
-    const updated = [newRev, ...productReviews];
-    setProductReviews(updated);
-    localStorage.setItem(`reviews_${product.id}`, JSON.stringify(updated));
-    setReviewSubmitStatus('success');
-    setReviewForm({ name: '', rating: 5, content: '' });
+    try {
+      const updated = await addReview(
+        product.id,
+        {
+          name: reviewForm.name,
+          rating: reviewForm.rating,
+          content: reviewForm.content
+        },
+        product.title,
+        product.category
+      );
+      setProductReviews(updated);
+      setReviewSubmitStatus('success');
+      setReviewForm({ name: '', rating: 5, content: '' });
+    } catch (e) {
+      console.error("Failed to submit review:", e);
+    }
 
     setTimeout(() => {
       setReviewSubmitStatus('idle');
@@ -296,6 +289,11 @@ useEffect(() => {
   
   const inWishlist = isInWishlist(product.id);
 
+  const totalReviews = productReviews.length;
+  const averageRating = totalReviews > 0
+    ? (productReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1)
+    : "5.0";
+
   return (
     <div className="bg-white min-h-screen pb-24 md:pb-12">
       {/* SEO Metadata */}
@@ -313,7 +311,9 @@ useEffect(() => {
           brand: product.vendor,
           price: product.price,
           currency: 'INR',
-          availability: product.inStock ? 'InStock' : 'OutOfStock'
+          availability: product.inStock ? 'InStock' : 'OutOfStock',
+          ratingValue: averageRating,
+          reviewCount: totalReviews
         }}
       />
 

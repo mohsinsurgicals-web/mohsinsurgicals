@@ -18,6 +18,8 @@ interface SEOProps {
     price: number;
     currency: string;
     availability: string;
+    ratingValue?: string | number;
+    reviewCount?: string | number;
   };
 }
 
@@ -88,8 +90,8 @@ const SEO: React.FC<SEOProps> = ({
     },
     "aggregateRating": {
       "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "reviewCount": "85"
+      "ratingValue": productData.ratingValue?.toString() || "4.8",
+      "reviewCount": productData.reviewCount?.toString() || "85"
     }
   } : null;
 

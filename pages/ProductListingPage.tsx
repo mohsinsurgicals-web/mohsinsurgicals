@@ -71,6 +71,15 @@ const ProductListingPage: React.FC = () => {
     loadProducts();
   }, [searchParam]); 
 
+  // Dynamic Category Counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach(p => {
+      counts[p.category] = (counts[p.category] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
   // --- Filtering & Sorting Logic ---
   const processedProducts = useMemo(() => {
     let result = products.filter(p => {
@@ -271,7 +280,9 @@ const ProductListingPage: React.FC = () => {
                         checked={selectedCategories.includes(cat.slug || cat.name)} 
                         onChange={() => handleCategoryToggle(cat.slug || cat.name)}
                       />
-                      <span className={`text-sm ${selectedCategories.includes(cat.slug || cat.name) ? 'font-medium text-medical-primary' : ''}`}>{cat.name}</span>
+                      <span className={`text-sm ${selectedCategories.includes(cat.slug || cat.name) ? 'font-medium text-medical-primary text-gray-800' : 'text-gray-600'}`}>
+                        {cat.name} <span className="text-gray-400 text-xs">({categoryCounts[cat.slug || cat.name] || 0})</span>
+                      </span>
                     </label>
                   ))}
                 </div>

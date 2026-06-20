@@ -4,6 +4,7 @@ import { Product } from '../types';
 import { isRentalAvailable } from '../lib/shopify';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from '../context/CartContext';
+import { useReviews } from '../context/ReviewsContext';
 
 interface ProductCardProps {
   product: Product;
@@ -11,7 +12,10 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useCart();
+  const { getReviewsSummary } = useReviews();
   const navigate = useNavigate();
+  
+  const summary = getReviewsSummary(product.id, product.rating || 5.0, product.reviewCount || 0);
 
   const discount = product.compareAtPrice 
     ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100) 
@@ -92,12 +96,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </h3>
         
         {/* Rating Row */}
-        {product.rating && (
+        {summary && (
             <div className="flex items-center gap-2 mb-2">
                 <div className="flex items-center bg-green-50 px-2 py-0.5 rounded text-green-700 text-[11px] font-bold gap-1">
-                    <span>{product.rating}</span> <Star size={12} fill="currentColor" />
+                    <span>{summary.rating}</span> <Star size={12} fill="currentColor" />
                 </div>
-                <span className="text-[11px] text-gray-400">({product.reviewCount})</span>
+                <span className="text-[11px] text-gray-400">({summary.count})</span>
             </div>
         )}
 

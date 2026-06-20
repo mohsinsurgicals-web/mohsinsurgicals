@@ -20,6 +20,7 @@ import OrderSuccessPage from './pages/OrderSuccessPage';
 import AdminDashboard from './pages/AdminDashboard';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { ReviewsProvider } from './context/ReviewsContext';
 
 // Integrated AI + WhatsApp Support component
 import SupportCenter from './components/SupportCenter';
@@ -34,10 +35,11 @@ const ScrollToTopOnMount = () => {
 function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Router>
-          <ScrollToTopOnMount />
-          <div className="min-h-screen font-sans text-gray-800 bg-white flex flex-col relative">
+      <ReviewsProvider>
+        <CartProvider>
+          <Router>
+            <ScrollToTopOnMount />
+            <div className="min-h-screen font-sans text-gray-800 bg-white flex flex-col relative">
             <Header />
             <main className="flex-1">
               <Routes>
@@ -67,7 +69,8 @@ function App() {
           </div>
         </Router>
       </CartProvider>
-    </AuthProvider>
+    </ReviewsProvider>
+  </AuthProvider>
   );
 }
 
