@@ -230,19 +230,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.setItem('shopify_cart_id', cartData.id);
             localStorage.setItem('cartId', cartData.id); // Sync legacy key
             updateLocalCart(cartData.lines);
-            
-            // Sync with customer if logged in
-            const token = localStorage.getItem('shopify_customer_token');
-            if (token) {
-               try {
-                 const syncedCart = await attachCustomerToCart(cartData.id);
-                 if (syncedCart) {
-                    setCheckoutUrl(syncedCart.checkoutUrl);
-                 }
-               } catch (e) {
-                 console.warn("Failed to sync customer with cart on init", e);
-               }
-            }
         }
         
       } catch (e) {

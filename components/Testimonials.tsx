@@ -13,17 +13,22 @@ const Testimonials: React.FC = () => {
     const loadTestimonials = async () => {
       try {
         const res = await fetch(`https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/testimonials`);
-        if (res.status === 404) {
-          // Initialize basket
-          await fetch(`https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/testimonials`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ testimonials: fallbackTestimonials })
-          });
-          setTestimonials(fallbackTestimonials);
-        } else if (!res.ok) {
+        if (res.status === 400 || res.status === 404) {
+          const text = await res.text();
+          if (res.status === 404 || text.includes("does not exist") || text.includes("not found")) {
+            // Initialize basket
+            await fetch(`https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/testimonials`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ testimonials: fallbackTestimonials })
+            });
+            setTestimonials(fallbackTestimonials);
+            return;
+          }
+        }
+        if (!res.ok) {
           throw new Error("Pantry error");
         } else {
           const data = await res.json();

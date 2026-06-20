@@ -53,11 +53,14 @@ export const fetchProductReviews = async (productId: string, title: string, cate
   const basket = `reviews_${cleanId(productId)}`;
   try {
     const res = await fetch(`https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/${basket}`);
-    if (res.status === 404) {
-      // Create initial reviews
-      const initialReviews = generateInitialReviews(title, category);
-      await saveProductReviews(productId, initialReviews);
-      return initialReviews;
+    if (res.status === 400 || res.status === 404) {
+      const text = await res.text();
+      if (res.status === 404 || text.includes("does not exist") || text.includes("not found")) {
+        // Create initial reviews
+        const initialReviews = generateInitialReviews(title, category);
+        await saveProductReviews(productId, initialReviews);
+        return initialReviews;
+      }
     }
     if (!res.ok) throw new Error("Pantry GET error");
     const data = await res.json();
@@ -101,8 +104,11 @@ export const saveProductReviews = async (productId: string, reviews: Review[]) =
 export const fetchAllReviewsSummaries = async (): Promise<ReviewsIndex> => {
   try {
     const res = await fetch(`https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/reviews_summary`);
-    if (res.status === 404) {
-      return {};
+    if (res.status === 400 || res.status === 404) {
+      const text = await res.text();
+      if (res.status === 404 || text.includes("does not exist") || text.includes("not found")) {
+        return {};
+      }
     }
     if (!res.ok) throw new Error("Pantry GET summary error");
     const data = await res.json();
