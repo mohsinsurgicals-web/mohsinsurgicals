@@ -40,9 +40,13 @@ const ChatAssistant: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    // Verify API Key existence
-    if (!GEMINI_API_KEY) {
-      setMessages(prev => [...prev, { role: 'model', content: "API Key not found. Please add VITE_GEMINI_API_KEY to your .env file and restart the server." }]);
+    const isValidApiKey = GEMINI_API_KEY && 
+                          GEMINI_API_KEY !== 'undefined' && 
+                          GEMINI_API_KEY !== 'null' && 
+                          GEMINI_API_KEY.trim() !== '';
+
+    if (!isValidApiKey) {
+      setMessages(prev => [...prev, { role: 'model', content: "AI assistant is currently offline." }]);
       return;
     }
 

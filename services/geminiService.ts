@@ -4,13 +4,18 @@ let ai: GoogleGenAI | null = null;
 
 const getAIClient = (): GoogleGenAI | null => {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) {
+  if (!apiKey || apiKey === 'undefined' || apiKey === 'null' || apiKey.trim() === '') {
     return null;
   }
-  if (!ai) {
-    ai = new GoogleGenAI({ apiKey });
+  try {
+    if (!ai) {
+      ai = new GoogleGenAI({ apiKey });
+    }
+    return ai;
+  } catch (error) {
+    console.error("Failed to initialize GoogleGenAI:", error);
+    return null;
   }
-  return ai;
 };
 
 interface AISEOSuggestion {

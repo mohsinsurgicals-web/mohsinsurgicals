@@ -41,8 +41,13 @@ const SupportCenter: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    if (!GEMINI_API_KEY) {
-      setMessages(prev => [...prev, { role: 'model', content: "API Key missing in environment." }]);
+    const isValidApiKey = GEMINI_API_KEY && 
+                          GEMINI_API_KEY !== 'undefined' && 
+                          GEMINI_API_KEY !== 'null' && 
+                          GEMINI_API_KEY.trim() !== '';
+
+    if (!isValidApiKey) {
+      setMessages(prev => [...prev, { role: 'model', content: "AI Chat is currently offline. Please click WhatsApp below to connect with us directly!" }]);
       return;
     }
 
