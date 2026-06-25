@@ -518,6 +518,25 @@ export const isRentalAvailable = (product: Product): boolean => {
   return isOxygen || isBipap || isCpap;
 };
 
+export const extractYoutubeVideos = (html: string = ""): string[] => {
+  const videoIds = new Set<string>();
+  
+  // Look for embed URLs in iframe src
+  const iframeSrcRegex = /src=["'](?:https?:)?\/\/www\.youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/g;
+  let match;
+  while ((match = iframeSrcRegex.exec(html)) !== null) {
+    if (match[1]) videoIds.add(match[1]);
+  }
+
+  // Look for any youtube watch links or youtu.be links in html
+  const watchRegex = /(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/g;
+  while ((match = watchRegex.exec(html)) !== null) {
+    if (match[1]) videoIds.add(match[1]);
+  }
+
+  return Array.from(videoIds).map(id => `https://www.youtube.com/embed/${id}`);
+};
+
 const normalizeProduct = (shopifyProduct: any): Product => {
   const node = shopifyProduct.node || shopifyProduct;
   const firstVariant = node.variants?.edges?.[0]?.node || node.variants?.[0] || {};
@@ -577,6 +596,19 @@ const normalizeProduct = (shopifyProduct: any): Product => {
     if (!isNaN(val)) countVal = val;
   }
 
+  // Extract YouTube videos from Shopify media or descriptionHtml
+  const mediaEdges = node.media?.edges || [];
+  const nativeVideos: string[] = [];
+  mediaEdges.forEach((edge: any) => {
+    const m = edge.node;
+    if (m && m.mediaContentType === 'EXTERNAL_VIDEO' && m.host?.toLowerCase() === 'youtube' && m.embedUrl) {
+      nativeVideos.push(m.embedUrl);
+    }
+  });
+
+  const extractedVideos = extractYoutubeVideos(node.descriptionHtml || node.description || "");
+  const combinedVideos = Array.from(new Set([...nativeVideos, ...extractedVideos]));
+
   return {
     id: node.id,
     handle: node.handle,
@@ -605,7 +637,8 @@ const normalizeProduct = (shopifyProduct: any): Product => {
         namespace: m.namespace,
         key: m.key,
         value: m.value
-      }))
+      })),
+    youtubeVideos: combinedVideos
   };
 };
 
@@ -695,6 +728,18 @@ const PRODUCT_FRAGMENT = `
     edges {
       node {
         url
+      }
+    }
+  }
+  media(first: 10) {
+    edges {
+      node {
+        mediaContentType
+        ... on ExternalVideo {
+          id
+          embedUrl
+          host
+        }
       }
     }
   }

@@ -351,6 +351,20 @@ const AdminDashboard: React.FC = () => {
                         />
                         <p className="text-[10px] text-gray-400 mt-1">Enter comma-separated values to improve internal search matching.</p>
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          YouTube Video URLs
+                        </label>
+                        <textarea 
+                          rows={2}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-primary/20 outline-none"
+                          placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ, https://youtu.be/..."
+                          value={currentOverrides.youtube_videos || ''}
+                          onChange={(e) => updateProductOverride(selectedProduct.id, 'youtube_videos', e.target.value)}
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">Enter comma-separated YouTube video links or embed links to show in the product media gallery.</p>
+                      </div>
                     </div>
                   </section>
 

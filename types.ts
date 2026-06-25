@@ -28,6 +28,7 @@ export interface Product {
     key: string;
     value: string;
   }[];
+  youtubeVideos?: string[];
 }
 
 export interface Category {

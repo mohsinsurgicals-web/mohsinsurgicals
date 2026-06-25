@@ -19,6 +19,7 @@ const ProductDetailPage: React.FC = () => {
   const [selectedBundleItems, setSelectedBundleItems] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeImage, setActiveImage] = useState('');
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist, isLoading: isCartLoading } = useCart();
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
@@ -42,6 +43,26 @@ const ProductDetailPage: React.FC = () => {
   const [zoomStyle, setZoomStyle] = useState<React.CSSProperties>({});
   const [isZoomed, setIsZoomed] = useState(false);
   const [managedMetafields, setManagedMetafields] = useState<any>({});
+
+  const youtubeVideos = React.useMemo(() => {
+    if (!product) return [];
+    if (managedMetafields?.youtube_videos) {
+      return managedMetafields.youtube_videos
+        .split(',')
+        .map((url: string) => url.trim())
+        .filter(Boolean)
+        .map((url: string) => {
+          if (url.includes('/embed/')) return url;
+          const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+          const match = url.match(regExp);
+          if (match && match[2].length === 11) {
+            return `https://www.youtube.com/embed/${match[2]}`;
+          }
+          return url;
+        });
+    }
+    return product.youtubeVideos || [];
+  }, [product, managedMetafields]);
 
   // Reviews state
   const { loadReviews, addReview } = useReviews();
@@ -101,6 +122,7 @@ useEffect(() => {
       setIsLoading(true);
       const data = await fetchProductByHandle(id); // load by handle
       setProduct(data);
+      setActiveVideo(null);
 
       try {
         if (data) {
@@ -334,17 +356,28 @@ useEffect(() => {
           {/* Left Column: Images */}
           <div className="lg:w-1/2">
             <div 
-              className="bg-white border border-gray-200 rounded-xl p-6 flex items-center justify-center relative min-h-[300px] md:min-h-[450px] overflow-hidden cursor-zoom-in group"
-              onMouseMove={handleMouseMove}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
+              className={`bg-white border border-gray-200 rounded-xl p-6 flex items-center justify-center relative min-h-[300px] md:min-h-[450px] overflow-hidden ${!activeVideo ? 'cursor-zoom-in group' : ''}`}
+              onMouseMove={!activeVideo ? handleMouseMove : undefined}
+              onMouseEnter={!activeVideo ? handleMouseEnter : undefined}
+              onMouseLeave={!activeVideo ? handleMouseLeave : undefined}
             >
-              <img 
-                src={activeImage || product.image || undefined} 
-                alt={product.title} 
-                className="max-h-[300px] md:max-h-[400px] w-auto object-contain mix-blend-multiply transition-transform duration-100 ease-out"
-                style={zoomStyle}
-              />
+              {activeVideo ? (
+                <iframe
+                  src={activeVideo}
+                  title={`${product.title} Video`}
+                  className="absolute inset-0 w-full h-full rounded-xl"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <img 
+                  src={activeImage || product.image || undefined} 
+                  alt={product.title} 
+                  className="max-h-[300px] md:max-h-[400px] w-auto object-contain mix-blend-multiply transition-transform duration-100 ease-out"
+                  style={zoomStyle}
+                />
+              )}
+              
               <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                 <button 
                   onClick={handleShare}
@@ -377,17 +410,51 @@ useEffect(() => {
             </div>
             
             {/* Gallery */}
-            {product.images && product.images.length > 1 && (
+            {((product.images && product.images.length > 0) && (product.images.length + youtubeVideos.length) > 1) && (
                 <div className="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-thin">
                     {product.images.map((img, idx) => (
                         <div 
-                            key={idx} 
-                            onClick={() => setActiveImage(img)}
-                            className={`w-16 h-16 md:w-20 md:h-20 border rounded-lg p-1 cursor-pointer transition-all flex-shrink-0 ${activeImage === img ? 'border-medical-primary ring-1 ring-medical-primary' : 'border-gray-200 hover:border-gray-300'}`}
+                            key={`img-${idx}`} 
+                            onClick={() => {
+                              setActiveImage(img);
+                              setActiveVideo(null);
+                            }}
+                            className={`w-16 h-16 md:w-20 md:h-20 border rounded-lg p-1 cursor-pointer transition-all flex-shrink-0 ${(!activeVideo && activeImage === img) ? 'border-medical-primary ring-1 ring-medical-primary' : 'border-gray-200 hover:border-gray-300'}`}
                         >
                             <img src={img || undefined} className="w-full h-full object-contain" alt="" />
                         </div>
                     ))}
+                    
+                    {youtubeVideos.map((videoUrl, idx) => {
+                        let videoId = "";
+                        if (videoUrl.includes('/embed/')) {
+                          videoId = videoUrl.split('/embed/')[1]?.split('?')[0] || "";
+                        } else {
+                          const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                          const match = videoUrl.match(regExp);
+                          if (match && match[2].length === 11) {
+                            videoId = match[2];
+                          }
+                        }
+                        const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : `https://via.placeholder.com/150?text=Play+Video`;
+                        
+                        return (
+                          <div 
+                              key={`vid-${idx}`} 
+                              onClick={() => setActiveVideo(videoUrl)}
+                              className={`w-16 h-16 md:w-20 md:h-20 border rounded-lg p-1 cursor-pointer transition-all flex-shrink-0 relative bg-black/5 flex items-center justify-center ${activeVideo === videoUrl ? 'border-medical-primary ring-1 ring-medical-primary' : 'border-gray-200 hover:border-gray-300'}`}
+                          >
+                              <img src={thumbUrl} className="w-full h-full object-cover rounded" alt="Video Thumbnail" />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+                                <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-white shadow">
+                                  <svg className="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
+                              </div>
+                          </div>
+                        );
+                    })}
                 </div>
             )}
           </div>
