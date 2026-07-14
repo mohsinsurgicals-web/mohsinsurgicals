@@ -17,6 +17,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AccountPage from './pages/AccountPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
+import ThankYouPage from './pages/ThankYouPage';
 import AdminDashboard from './pages/AdminDashboard';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -58,6 +59,7 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/order-success" element={<OrderSuccessPage />} />
+                <Route path="/thank-you" element={<ThankYouPage />} />
                 <Route path="/admin" element={<AdminDashboard />} />
               </Routes>
             </main>
