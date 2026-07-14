@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-medical-primary: #008080;
+  --color-medical-dark: #005f5f;
+  --color-medical-light: #F0FFFF;
+  --color-medical-text: #1F2937;
+  --color-medical-alert: #D9534F;
+  --color-medical-success: #28A745;
+  --color-medical-gray: #F3F4F6;
+  --color-medical-accent: #E0F7FA;
+
+  --font-sans: 'Open Sans', sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  background-color: #F9FAFB;
+}
+
+/* Custom scrollbar for clinical feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C1C1C1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A8A8A8;
+}
