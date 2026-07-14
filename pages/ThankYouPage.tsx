@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, Heart, Phone, ArrowRight, ShoppingBag, Star, Shield, Truck } from 'lucide-react';
+import { CONTACT_PHONE } from '../constants';
 import { Link } from '../context/CartContext';
 
 const ThankYouPage: React.FC = () => {
@@ -110,10 +111,10 @@ const ThankYouPage: React.FC = () => {
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Need urgent help? Call us directly</p>
               <a
-                href="tel:+923001234567"
+                href={`tel:${CONTACT_PHONE.replace(/\s/g, '')}`}
                 className="text-medical-primary font-bold text-lg hover:text-medical-dark transition-colors"
               >
-                +92 300 123 4567
+                {CONTACT_PHONE}
               </a>
             </div>
           </div>
